@@ -66,11 +66,11 @@ def ndvi(in_nir_band, in_colour_band, in_rows, in_cols, in_geotransform, out_tif
     return output
 
 # Open NIR image and get its only band.
-nir_tiff = Open(r'D:\landsat_data\20160521_halifax\sample_data_for_tool\NIR_IMAGE.tif')
+nir_tiff = Open(r'NIR_IMAGE.tif')
 nir_band = nir_tiff.GetRasterBand(1)
 
 # Open red image and get its only band.
-red_tiff = Open(r'D:\landsat_data\20160521_halifax\sample_data_for_tool\RED_IMAGE.tif')
+red_tiff = Open(r'RED_IMAGE.tif')
 red_band = red_tiff.GetRasterBand(1)
 
 # Get the rows and cols from one of the images (both should always be the same)
@@ -78,10 +78,10 @@ rows, cols, geotransform = nir_tiff.RasterYSize, nir_tiff.RasterXSize, nir_tiff.
 print(geotransform)
 
 # Set an output for a 16-bit unsigned integer (0-255)
-out_tiff_int16 = r'D:\landsat_data\20160521_halifax\sample_data_for_tool\NDVI_INT16.tif'
+out_tiff_int16 = r'NDVI_INT16.tif'
 
 # Set the output for a 32-bit floating point (-1 to 1)
-out_tiff_float32 = r'D:\landsat_data\20160521_halifax\sample_data_for_tool\NDVI_FLOAT32.tif'
+out_tiff_float32 = r'NDVI_FLOAT32.tif'
 
 # Run the function for unsigned 16-bit integer
 ndvi(nir_band, red_band, rows, cols, geotransform, out_tiff_int16, gdal.GDT_UInt16)

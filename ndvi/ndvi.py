@@ -1,30 +1,29 @@
 import numpy as np
 from numpy import nan_to_num, subtract, add, divide, multiply
 from osgeo import gdal, gdalconst
-from gdal import Open, GetDriverByName
+from gdal import GetDriverByName
 
 def ndvi(in_nir_band, in_colour_band, in_rows, in_cols, in_geotransform, out_tiff, data_type=gdal.GDT_Float32):
 
     """
     Performs an NDVI calculation given two input bands, as well as other information that can be retrieved from the
     original image.
-
-    @param in_nir_band: A GDAL band object representing the near-infrared image data.
-    @type in_nir_band: GDALRasterBand
-    @param in_colour_band: A GDAL band object representing the colour image data.
-    @type: in_colour_band: GDALRasterBand
-    @param in_rows: The number of rows in both input bands.
-    @type: in_rows: int
-    @param in_cols: The number of columns in both input bands.
-    @type: in_cols: int
-    @param in_geotransform: The geographic transformation to be applied to the output image.
-    @type in_geotransform: Tuple (as returned by GetGeoTransform())
-    @param out_tiff: Path to the desired output .tif file.
-    @type: out_tiff: String (should end in ".tif")
-    @param data_type: Data type of output image.  Valid values are gdal.UInt16 and gdal.Float32.  Default is
+    @param in_nir_band A GDAL band object representing the near-infrared image data.
+    @type in_nir_band GDALRasterBand
+    @param in_colour_band A GDAL band object representing the colour image data.
+    @type: in_colour_band GDALRasterBand
+    @param in_rows The number of rows in both input bands.
+    @type: in_rows int
+    @param in_cols The number of columns in both input bands.
+    @type: in_cols int
+    @param in_geotransform The geographic transformation to be applied to the output image.
+    @type in_geotransform Tuple (as returned by GetGeoTransform())
+    @param out_tiff Path to the desired output .tif file.
+    @type: out_tiff String (should end in ".tif")
+    @param data_type Data type of output image.  Valid values are gdal.UInt16 and gdal.Float32.  Default is
                       gdal.Float32
-    @type data_type: GDALDataType
-    @return:
+    @type data_type GDALDataType
+    @return None
     """
 
     # Read the input bands as numpy arrays.
@@ -50,9 +49,9 @@ def ndvi(in_nir_band, in_colour_band, in_rows, in_cols, in_geotransform, out_tif
     # write the contents of the int16 NDVI calculation to it.  Otherwise, create a float32 geotiff with one band and
     # write the contents of the float32 NDVI calculation to it.
     if data_type == gdal.GDT_UInt16:
-        ndvi_int16 = multiply((ndvi_float32 + 1), (2**7 - 1))
-        output = geotiff.Create(out_tiff, in_cols, in_rows, 1, gdal.GDT_UInt16)
-        output.GetRasterBand(1).WriteArray(ndvi_int16)
+        ndvi_int8 = multiply((ndvi_float32 + 1), (2**7 - 1))
+        output = geotiff.Create(out_tiff, in_cols, in_rows, 1, gdal.GDT_Byte)
+        output.GetRasterBand(1).WriteArray(ndvi_int8)
     elif data_type == gdal.GDT_Float32:
         output = geotiff.Create(out_tiff, in_cols, in_rows, 1, gdal.GDT_Float32)
         output.GetRasterBand(1).WriteArray(ndvi_float32)
@@ -62,31 +61,5 @@ def ndvi(in_nir_band, in_colour_band, in_rows, in_cols, in_geotransform, out_tif
     # Set the geographic transformation as the input.
     output.SetGeoTransform(in_geotransform)
 
-    # return the output image in case you want to do something else with it.
-    return output
+    return None
 
-# Open NIR image and get its only band.
-nir_tiff = Open(r'NIR_IMAGE.tif')
-nir_band = nir_tiff.GetRasterBand(1)
-
-# Open red image and get its only band.
-red_tiff = Open(r'RED_IMAGE.tif')
-red_band = red_tiff.GetRasterBand(1)
-
-# Get the rows and cols from one of the images (both should always be the same)
-rows, cols, geotransform = nir_tiff.RasterYSize, nir_tiff.RasterXSize, nir_tiff.GetGeoTransform()
-print(geotransform)
-
-# Set an output for a 16-bit unsigned integer (0-255)
-out_tiff_int16 = r'NDVI_INT16.tif'
-
-# Set the output for a 32-bit floating point (-1 to 1)
-out_tiff_float32 = r'NDVI_FLOAT32.tif'
-
-# Run the function for unsigned 16-bit integer
-ndvi(nir_band, red_band, rows, cols, geotransform, out_tiff_int16, gdal.GDT_UInt16)
-
-# Run the function for 32-bit floating point
-ndvi(nir_band, red_band, rows, cols, geotransform, out_tiff_float32, gdal.GDT_Float32)
-
-print('done')

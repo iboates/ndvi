@@ -39,8 +39,8 @@ def ndvi(in_nir_band, in_colour_band, in_rows, in_cols, in_geotransform, out_tif
     denominator = add(np_nir_as32, np_colour_as32)
     result = divide(numerator, denominator)
 
-    # Remove any NaNs cause by division by zero.
-    ndvi_float32 = nan_to_num(result)
+    # Remove any out-of-bounds areas
+    result[result == -0] = -99
 
     # Initialize a geotiff driver.
     geotiff = GetDriverByName('GTiff')
@@ -49,12 +49,16 @@ def ndvi(in_nir_band, in_colour_band, in_rows, in_cols, in_geotransform, out_tif
     # write the contents of the int16 NDVI calculation to it.  Otherwise, create a float32 geotiff with one band and
     # write the contents of the float32 NDVI calculation to it.
     if data_type == gdal.GDT_UInt16:
-        ndvi_int8 = multiply((ndvi_float32 + 1), (2**7 - 1))
+        ndvi_int8 = multiply((result + 1), (2**7 - 1))
         output = geotiff.Create(out_tiff, in_cols, in_rows, 1, gdal.GDT_Byte)
-        output.GetRasterBand(1).WriteArray(ndvi_int8)
+        output_band = output.GetRasterBand(1)
+        output_band.SetNoDataValue(-99)
+        output_band.WriteArray(ndvi_int8)
     elif data_type == gdal.GDT_Float32:
         output = geotiff.Create(out_tiff, in_cols, in_rows, 1, gdal.GDT_Float32)
-        output.GetRasterBand(1).WriteArray(ndvi_float32)
+        output_band = output.GetRasterBand(1)
+        output_band.SetNoDataValue(-99)
+        output_band.WriteArray(result)
     else:
         raise ValueError('Invalid output data type.  Valid types are gdal.UInt16 or gdal.Float32.')
 
